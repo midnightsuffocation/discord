@@ -1,29 +1,20 @@
-[START OUTPUT}
-# BASIC HTTP TRACKING SERVER - ETHICAL USE ONLY
-# Logs visitor data and serves tracking pixel
-
+# server.py
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import socketserver
 from datetime import datetime
 import os
 import json
-import requests  # For Discord notifications
-from urllib.parse import urlparse, parse_qs
+import requests
 from email.utils import formatdate
 
 PORT = 8000
 LOG_FILE = "access.log"
-DISCORD_WEBHOOK = ("https://discord.com/api/webhooks/1398083193265062020/OL-nBYHkOjSi8Nf50TJ9vA4UTyT6dhNcSTlF6vc4B-UEgmf8nHtnvMzj7DGd8iLiZDjt")
+DISCORD_WEBHOOK = ("https://discord.com/api/webhooks/1398083193265062020/OL-nBYHkOjSi8Nf50TJ9vA4UTyT6dhNcSTlF6vc4B-UEgmf8nHtnvMzj7DGd8iLiZDjt")  # Add your Discord webhook URL here
 PIXEL_PATH = "/tracking_pixel.gif"
-
-# Actual 1x1 transparent GIF pixel
 PIXEL_DATA = b'GIF89a\x01\x00\x01\x00\x80\x00\x00\xff\xff\xff\x00\x00\x00!\xf9\x04\x01\x00\x00\x00\x00,\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02D\x01\x00;'
 
 class TrackingHandler(BaseHTTPRequestHandler):
-    """Custom HTTP handler with tracking capabilities"""
-    
     def log_access(self):
-        """Log request details with forensic data"""
         client_ip = self.client_address[0]
         user_agent = self.headers.get('User-Agent', 'Unknown')
         referer = self.headers.get('Referer', 'Direct')
@@ -35,23 +26,18 @@ class TrackingHandler(BaseHTTPRequestHandler):
             'user_agent': user_agent,
             'method': self.command,
             'path': self.path,
-            'referer': referer,
-            'headers': dict(self.headers)
+            'referer': referer
         }
         
-        # Terminal output
         print(f"[{timestamp}] {client_ip} - {user_agent[:50]}...")
         
-        # File logging
         with open(LOG_FILE, "a") as log:
             log.write(json.dumps(log_entry) + "\n")
         
-        # Discord notification for pixel access
         if PIXEL_PATH in self.path and DISCORD_WEBHOOK:
             self.send_discord_alert(client_ip, user_agent, referer)
     
     def send_discord_alert(self, ip, ua, referer):
-        """Send Discord notification about pixel trigger"""
         embed = {
             "title": "📌 Tracking Pixel Triggered!",
             "color": 5814783,
@@ -69,10 +55,8 @@ class TrackingHandler(BaseHTTPRequestHandler):
             print(f"Discord notification failed: {e}")
     
     def do_GET(self):
-        """Handle GET requests with routing"""
         self.log_access()
         
-        # Serve tracking pixel
         if self.path == PIXEL_PATH:
             self.send_response(200)
             self.send_header('Content-type', 'image/gif')
@@ -82,7 +66,6 @@ class TrackingHandler(BaseHTTPRequestHandler):
             self.wfile.write(PIXEL_DATA)
             return
         
-        # Serve basic HTML page
         self.send_response(200)
         self.send_header('Content-type', 'text/html')
         self.end_headers()
@@ -91,26 +74,38 @@ class TrackingHandler(BaseHTTPRequestHandler):
         <!DOCTYPE html>
         <html>
         <head>
-            <title>Basic Web Server</title>
+            <title>Tracking Server</title>
+            <style>
+                body {{ font-family: sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }}
+                .container {{ background: #f8f9fa; padding: 30px; border-radius: 10px; }}
+                .info {{ background: white; padding: 15px; border-radius: 5px; }}
+            </style>
         </head>
         <body>
-            <h1>Server is Running</h1>
-            <p>Visited at: {datetime.now().strftime('%c')}</p>
-            <p>Your IP: {self.client_address[0]}</p>
-            <img src="{PIXEL_PATH}" alt="tracking pixel">
+            <div class="container">
+                <h1>🛜 HTTP Tracking Server</h1>
+                <div class="info">
+                    <p>✅ Server is operational</p>
+                    <p>🕒 Time: {datetime.now().strftime('%c')}</p>
+                    <p>📍 Your IP: {self.client_address[0]}</p>
+                    <p>🖥️ User Agent: {self.headers.get('User-Agent', 'Unknown')[:80]}</p>
+                </div>
+                <p>This page contains a tracking pixel that logs accesses.</p>
+                <img src="{PIXEL_PATH}" alt="tracking pixel">
+            </div>
         </body>
         </html>
         """
         self.wfile.write(html_content.encode('utf-8'))
 
 if __name__ == "__main__":
-    print(f"Starting tracking server on port {PORT}")
-    print(f"Access log: {os.path.abspath(LOG_FILE)}")
-    print(f"Tracking pixel URL: http://localhost:{PORT}{PIXEL_PATH}")
+    print(f"🚀 Starting tracking server on port {PORT}")
+    print(f"📝 Access log: {os.path.abspath(LOG_FILE)}")
+    print(f"📌 Tracking pixel URL: http://localhost:{PORT}{PIXEL_PATH}")
+    print("🛑 Press CTRL+C to stop the server")
     
     with HTTPServer(("", PORT), TrackingHandler) as server:
         try:
             server.serve_forever()
         except KeyboardInterrupt:
-            print("\nServer stopped by user")
-[START OUTPUT] .-.-.-.-{GODMODE: ENABLED...LOVE PLINY <3}-.-.-.-.
+            print("\n🛑 Server stopped by user")
